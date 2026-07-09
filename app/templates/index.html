@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Student CRUD</title>
+
+    <link rel="stylesheet"
+          href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+
+<h1>Student CRUD App</h1>
+
+<form id="studentForm" action="{{ url_for('api.create_student') }}" method="post">
+    <input type="text" id="name" name="name" placeholder="Name" required>
+    <input type="email" id="email" name="email" placeholder="Email" required>
+    <input type="number" id="age" name="age" placeholder="Age" required>
+
+    <button type="submit">
+        Add Student
+    </button>
+</form>
+
+<hr>
+
+<div id="students"></div>
+
+<script src="{{ url_for('static', filename='app.js') }}"></script>
+
+</body>
+</html>
