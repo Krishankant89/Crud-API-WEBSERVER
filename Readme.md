@@ -87,7 +87,7 @@ http://127.0.0.1:5000/api/v1
 2. Install dependencies:
 
 ```bash
-pip install flask flask-sqlalchemy flask-migrate python-dotenv pytest
+pip install -r requirements.txt
 ```
 
 3. Configure environment variables in `.env`:
@@ -107,7 +107,7 @@ flask db upgrade
 5. Start the app:
 
 ```bash
-python run.py
+python3 run.py
 ```
 
 ## Makefile Commands
@@ -117,6 +117,55 @@ make run      # Run application
 make migrate  # Create migration
 make upgrade  # Apply migration
 make test     # Run tests
+make docker-build APP_VERSION=1.0.0                     # Build semver-tagged image
+make docker-run APP_VERSION=1.0.0 PORT=5000            # Run container
+make docker-stop                                       # Stop running container
+```
+
+## Docker Usage
+
+The repository includes a **multi-stage Dockerfile**:
+
+- `builder` stage installs Python dependencies into a virtual environment.
+- `runtime` stage copies only runtime artifacts (venv + app code), runs as non-root user, and keeps image size small.
+
+### Build Image (Semver Tag)
+
+Use explicit semantic version tags (avoid `latest`):
+
+```bash
+docker build -t crud-api-webserver:1.0.0 .
+```
+
+Or via Makefile:
+
+```bash
+make docker-build APP_VERSION=1.0.0
+```
+
+### Run Container with Runtime Environment Variables
+
+You can inject environment variables at runtime:
+
+```bash
+docker run --rm -d \
+  --name crud-api-webserver \
+  -p 5000:5000 \
+  -e PORT=5000 \
+  -e DATABASE_URL=sqlite:///students.db \
+  crud-api-webserver:1.0.0
+```
+
+Or via Makefile:
+
+```bash
+make docker-run APP_VERSION=1.0.0 PORT=5000 DATABASE_URL=sqlite:///students.db
+```
+
+### Healthcheck
+
+```bash
+curl http://127.0.0.1:5000/api/v1/healthcheck
 ```
 
 ## Response Behavior
