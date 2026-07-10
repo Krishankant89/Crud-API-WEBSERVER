@@ -1,6 +1,7 @@
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
+from flask import render_template
 
 db = SQLAlchemy()
 migrate = Migrate()
@@ -17,6 +18,10 @@ def create_app():
     from app.routes import api_bp
 
     app.register_blueprint(api_bp)
+    
+    @app.route("/")
+    def home():
+        return render_template("index.html")
 
     @app.errorhandler(404)
     def not_found(error):
