@@ -17,6 +17,9 @@ def create_app():
     from app.models import Student   # <-- IMPORTANT
     from app.routes import api_bp
 
+    with app.app_context():
+        db.create_all()
+
     app.register_blueprint(api_bp)
     
     @app.route("/")
