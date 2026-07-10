@@ -10,6 +10,16 @@ api_bp = Blueprint(
     url_prefix="/api/v1"
 )
 
+def _get_payload():
+    json_data = request.get_json(silent=True)
+    if isinstance(json_data, dict):
+        return json_data
+
+    if request.form:
+        return request.form.to_dict()
+
+    return None
+
 
 # HEALTHCHECK
 @api_bp.route("/healthcheck", methods=["GET"])
@@ -22,7 +32,7 @@ def healthcheck():
 # CREATE
 @api_bp.route("/students", methods=["POST"])
 def create_student():
-    data = request.get_json()
+    data = _get_payload()
 
     if not data:
         return jsonify({
@@ -31,10 +41,17 @@ def create_student():
 
     required_fields = ["name", "email", "age"]
     for field in required_fields:
-        if field not in data:
+        if field not in data or str(data[field]).strip() == "":
             return jsonify({
                 "error": f"{field} is required"
             }), 400
+
+    try:
+        age = int(data["age"])
+    except (TypeError, ValueError):
+        return jsonify({
+            "error": "age must be a valid integer"
+        }), 400
 
     # Modern 2.0 query style for checking duplicates
     existing_student = db.session.execute(
@@ -49,7 +66,7 @@ def create_student():
     student = Student(
         name=data["name"],
         email=data["email"],
-        age=data["age"]
+        age=age
     )
 
     db.session.add(student)
@@ -92,7 +109,7 @@ def update_student(id):
             "message": "Student not found"
         }), 404
 
-    data = request.get_json()
+    data = _get_payload()
     if not data:
         return jsonify({
             "error": "Request body required"
@@ -111,8 +128,20 @@ def update_student(id):
             }), 409
         student.email = new_email
 
+    if "name" in data and str(data["name"]).strip() == "":
+        return jsonify({
+            "error": "name cannot be empty"
+        }), 400
+
     student.name = data.get("name", student.name)
-    student.age = data.get("age", student.age)
+
+    if "age" in data:
+        try:
+            student.age = int(data["age"])
+        except (TypeError, ValueError):
+            return jsonify({
+                "error": "age must be a valid integer"
+            }), 400
 
     db.session.commit()
     return jsonify(student.to_dict()), 200
